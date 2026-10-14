@@ -24,7 +24,7 @@ app.innerHTML = `
       <div class="dashboard"><div><span class="stat-label">Time left</span><strong id="clock" role="timer">3:00</strong></div><div class="pair-stat"><span class="stat-label">Pairs cleared</span><strong><span id="cleared">0</span><small> / 40</small></strong></div><button class="quiet" id="reset">New board</button></div>
       <div class="timer-track" aria-hidden="true"><div id="timer-fill"></div></div>
       <div class="board-shell"><div class="board" aria-label="Tile board"></div><svg class="connections" viewBox="0 0 1000 800" aria-hidden="true"></svg>
-        <div class="overlay" id="overlay"><div class="welcome"><div class="pair-mark" aria-hidden="true">✳ ✳</div><h2>Ready to connect?</h2><p>80 tiles. 40 pairs.<br>A little space makes all the difference.</p><label class="duration-label">Seconds per board <input id="duration" type="number" min="1" max="3600" value="${seconds}"></label><button class="primary" id="start">Start</button><span class="start-note">The clock starts when you do.</span></div></div>
+        <div class="overlay" id="overlay">${welcomeScreen("Ready to connect?", "80 tiles. 40 pairs.<br>A little space makes all the difference.")}</div>
       </div>
       <div class="under-board"><span id="message" role="status" aria-live="polite">Take a breath. Then find your first pair.</span><span class="side-note">Match. Connect. Repeat.</span></div>
     </section>
@@ -39,6 +39,16 @@ const timerFill = app.querySelector<HTMLElement>("#timer-fill")!;
 const reset = app.querySelector<HTMLButtonElement>("#reset")!;
 let previousStatus = "";
 let buttons: (HTMLButtonElement | null)[] = [];
+
+function welcomeScreen(heading: string, description: string) {
+  return `<div class="welcome">
+    <div class="pair-mark" aria-hidden="true">✳ ✳</div>
+    <h2>${heading}</h2><p>${description}</p>
+    <label class="duration-label">Seconds per board <input id="duration" type="number" min="1" max="3600" required value="${seconds}"></label>
+    <button class="primary" id="start">Start</button>
+    <span class="start-note">The clock starts when you do.</span>
+  </div>`;
+}
 
 function buildBoard() {
   board.replaceChildren();
@@ -81,7 +91,10 @@ function start() {
 function newBoard() {
   game = new Game(generateBoard().board, seconds * 1000);
   previousStatus = "";
-  overlay.innerHTML = `<div class="welcome"><div class="pair-mark" aria-hidden="true">✳ ✳</div><h2>Another little challenge?</h2><p>A fresh board, a fresh start.</p><label class="duration-label">Seconds per board <input id="duration" type="number" min="1" max="3600" value="${seconds}"></label><button class="primary" id="start">Start</button><span class="start-note">The clock starts when you do.</span></div>`;
+  overlay.innerHTML = welcomeScreen(
+    "Another little challenge?",
+    "A fresh board, a fresh start.",
+  );
   app.querySelector("#start")!.addEventListener("click", start);
   buildBoard();
   render(performance.now());

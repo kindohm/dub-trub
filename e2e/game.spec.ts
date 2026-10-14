@@ -35,12 +35,12 @@ test("the board fits a narrow touchscreen and accepts taps", async ({
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await page.getByRole("button", { name: "Start", exact: true }).click();
+  await page.getByRole("button", { name: "Start", exact: true }).tap();
   await page.screenshot({ path: "test-results/mobile.png", fullPage: true });
   const box = await page.locator(".board").boundingBox();
   expect(box!.x).toBeGreaterThanOrEqual(0);
   expect(box!.x + box!.width).toBeLessThanOrEqual(390);
-  await page.locator('[data-index="34"]').click();
-  await page.locator('[data-index="35"]').click();
+  await page.locator('[data-index="34"]').tap();
+  await page.locator('[data-index="35"]').tap();
   await expect(page.locator(".tile")).toHaveCount(78);
 });
