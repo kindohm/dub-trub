@@ -1,7 +1,11 @@
 import "./style.css";
 import { Game, DRAW_MS } from "./game";
 import { generateBoard } from "./generator";
+import { GameAudio } from "./audio";
 import { tiles } from "./tiles";
+
+const audio = new GameAudio();
+let previousPairs = 0;
 
 const requestedSeconds = Number(
   new URLSearchParams(location.search).get("seconds"),
@@ -26,6 +30,7 @@ app.innerHTML = `
       <div class="board-shell"><div class="board" aria-label="Tile board"></div><svg class="connections" viewBox="0 0 1000 800" aria-hidden="true"></svg>
         <div class="overlay" id="overlay">${welcomeScreen("Ready to connect?", "80 tiles. 40 pairs.<br>A little space makes all the difference.")}</div>
       </div>
+      <div class="audio-controls" aria-label="Audio settings"><label><input id="beat" type="checkbox"> Beat</label><label><input id="effects" type="checkbox"> Sound effects</label></div>
       <div class="under-board"><span id="message" role="status" aria-live="polite">Take a breath. Then find your first pair.</span><span class="side-note">Match. Connect. Repeat.</span></div>
     </section>
   </div>`;
@@ -69,7 +74,9 @@ function buildBoard() {
     );
     button.innerHTML = tile.icon;
     button.addEventListener("click", () => {
-      game.select(index, performance.now());
+      audio.unlock();
+      const feedback = game.select(index, performance.now());
+      if (feedback) audio.effect(feedback);
       render(performance.now());
     });
     cell.append(button);
@@ -83,12 +90,14 @@ function start() {
   seconds = Number(input.value);
   if (!Number.isFinite(seconds) || seconds < 1 || seconds > 3600) return;
   game = new Game(game.state.board, seconds * 1000);
+  audio.unlock();
   game.start(performance.now());
   buildBoard();
   render(performance.now());
   buttons[34]?.focus({ preventScroll: true });
 }
 function newBoard() {
+  previousPairs = 0;
   game = new Game(generateBoard().board, seconds * 1000);
   previousStatus = "";
   overlay.innerHTML = welcomeScreen(
@@ -110,9 +119,10 @@ function render(now: number) {
   );
   timerFill.style.transform = `scaleX(${state.remaining / (seconds * 1000)})`;
   const flat = state.board.flat();
-  cleared.textContent = String(
-    (80 - flat.filter((tile) => tile !== null).length) / 2,
-  );
+  const pairs = (80 - flat.filter((tile) => tile !== null).length) / 2;
+  cleared.textContent = String(pairs);
+  if (pairs > previousPairs) audio.effect("pair", pairs - previousPairs);
+  previousPairs = pairs;
   buttons.forEach((button, index) => {
     if (!button) return;
     if (flat[index] === null) {
@@ -143,6 +153,7 @@ function render(now: number) {
     .join("");
   if (previousStatus === state.status) return;
   previousStatus = state.status;
+  audio.setPlaying(state.status === "playing", !document.hidden);
   overlay.hidden = state.status === "playing";
   reset.hidden =
     state.status === "ready" ||
@@ -171,6 +182,18 @@ function render(now: number) {
 }
 app.querySelector("#start")!.addEventListener("click", start);
 reset.addEventListener("click", newBoard);
+for (const key of ["beat", "effects"] as const) {
+  const toggle = app.querySelector<HTMLInputElement>(`#${key}`)!;
+  toggle.checked = audio.preferences[key];
+  toggle.addEventListener("change", () =>
+    audio.setPreference(key, toggle.checked),
+  );
+}
+document.addEventListener("visibilitychange", () => {
+  game.advance(performance.now());
+  audio.setPlaying(game.state.status === "playing", !document.hidden);
+  render(performance.now());
+});
 buildBoard();
 function frame(now: number) {
   game.advance(now);

@@ -439,3 +439,21 @@ details p {
     max-width: 65ch;
   }
 }
+
+.audio-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+}
+.audio-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  min-height: 2rem;
+}
+.audio-controls input {
+  accent-color: #276749;
+}

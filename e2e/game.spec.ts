@@ -3,6 +3,8 @@ import { expect, test } from "@playwright/test";
 test("start reveals the board, a central match animates, and a new board resets play", async ({
   page,
 }) => {
+  await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-01-01T00:01:00Z"));
   await page.goto("/");
   await expect(page.locator(".tile")).toHaveCount(0);
   await page.getByRole("button", { name: "Start", exact: true }).click();
@@ -11,6 +13,7 @@ test("start reveals the board, a central match animates, and a new board resets 
   await page.locator('[data-index="34"]').click();
   await page.locator('[data-index="35"]').click();
   await expect(page.locator(".connection")).toHaveCount(1);
+  await page.clock.runFor(350);
   await expect(page.locator(".tile")).toHaveCount(78);
   await page.getByRole("button", { name: "New board", exact: true }).click();
   await expect(
@@ -82,3 +85,42 @@ for (const width of [1280, 390]) {
     }
   });
 }
+
+test("audio preferences persist independently and effects follow pair removal", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.addInitScript(() => {
+    const original = AudioContext.prototype.createOscillator;
+    (window as any).voices = 0;
+    AudioContext.prototype.createOscillator = function () {
+      (window as any).voices++;
+      return original.call(this);
+    };
+  });
+  await page.goto("/");
+  const beat = page.getByRole("checkbox", { name: "Beat", exact: true });
+  const effects = page.getByRole("checkbox", { name: "Sound effects" });
+  await expect(beat).toBeChecked();
+  await expect(effects).toBeChecked();
+  await beat.uncheck();
+  await page.reload();
+  await expect(beat).not.toBeChecked();
+  await expect(effects).toBeChecked();
+  await page.getByRole("button", { name: "Start", exact: true }).click();
+  const voices = () => page.evaluate(() => (window as any).voices);
+  await expect.poll(voices).toBe(0);
+  await page.locator('[data-index="34"]').click();
+  await expect.poll(voices).toBe(2);
+  await page.locator('[data-index="35"]').click();
+  await expect(page.locator(".tile")).toHaveCount(78);
+  await expect.poll(voices).toBe(8); // Two wooden taps and the two-note marimba.
+  await effects.uncheck();
+  await page.locator(".tile:not([disabled])").first().click();
+  expect(await voices()).toBe(8);
+  await page.reload();
+  await expect(effects).not.toBeChecked();
+  await expect(beat).not.toBeChecked();
+  expect(errors).toEqual([]);
+});

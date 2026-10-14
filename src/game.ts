@@ -2,7 +2,7 @@ export type Board = (number | null)[][];
 export type Point = { x: number; y: number };
 export type Match = { tiles: [number, number]; path: Point[]; started: number };
 export type Status = "ready" | "playing" | "won" | "timeout" | "deadlock";
-export const DRAW_MS = 500;
+export const DRAW_MS = 300;
 
 export class Game {
   readonly state: {
@@ -30,7 +30,7 @@ export class Game {
     this.deadline = now + this.duration;
     this.state.status = "playing";
   }
-  select(index: number, now: number) {
+  select(index: number, now: number): "tap" | "invalid" | undefined {
     this.advance(now);
     if (this.state.status !== "playing" || now >= this.deadline) return;
     const width = this.state.board[0].length;
@@ -39,12 +39,12 @@ export class Game {
     if (this.state.pending.some((match) => match.tiles.includes(index))) return;
     if (this.state.selected === index) {
       this.state.selected = null;
-      return;
+      return "tap";
     }
     const first = this.state.selected;
     if (first === null) {
       this.state.selected = index;
-      return;
+      return "tap";
     }
     const a = { x: first % width, y: Math.floor(first / width) };
     const b = { x: index % width, y: Math.floor(index / width) };
@@ -54,10 +54,11 @@ export class Game {
         : null;
     if (!path) {
       this.state.selected = index;
-      return;
+      return "invalid";
     }
     this.state.pending.push({ tiles: [first, index], path, started: now });
     this.state.selected = null;
+    return "tap";
   }
   advance(now: number) {
     if (this.state.status !== "playing") return;

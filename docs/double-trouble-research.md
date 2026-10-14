@@ -55,7 +55,7 @@ These decisions come from the design discussion with the user on 2026-10-14; the
 - Check for deadlock only after all accepted matches finish; pending removals may open new routes.
 - A valid match selected before time expires finishes its animation and removal even if the clock reaches zero meanwhile. Clearing the final pair wins; otherwise timeout ends the game after accepted matches resolve. Accept no new matches after the deadline.
 - A “Start” button reveals the board and begins the countdown together. The clock runs continuously, including during connection animations.
-- The first playable version focuses on clearing the board before time expires. Provide a “New board” action after a win or loss. Defer points, hints, undo, and sound.
+- The first playable version focuses on clearing the board before time expires. Provide a “New board” action after a win or loss. Defer points, hints, and undo. Sound was subsequently added using an original organic palette and percussion loop; see [sound design](sound-design.md).
 - Examples: horizontally adjacent matching tiles can connect directly; vertically adjacent matching tiles cannot connect directly, but may connect via an open column to their left or right if both horizontal legs are unobstructed. A path that needs to leave the board to go around a blocker is invalid.
 
 ## Historical details still unresolved

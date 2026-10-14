@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { generateBoard } from "./generator";
-import { Game } from "./game";
+import { Game, DRAW_MS } from "./game";
 
 test("starting boards have the required layout and a complete playable solution", () => {
   let seed = 17;
@@ -20,7 +20,7 @@ test("starting boards have the required layout and a complete playable solution"
       game.select(a, now);
       game.select(b, now);
       expect(game.state.pending).toHaveLength(1);
-      now += 500;
+      now += DRAW_MS;
       game.advance(now);
     }
     expect(game.state.status).toBe("won");
