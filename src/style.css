@@ -165,6 +165,7 @@ details p {
 .board {
   display: grid;
   grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
   aspect-ratio: 10/8;
   gap: 5px;
 }
